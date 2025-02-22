@@ -13,13 +13,13 @@ pub struct Database {
 }
 
 pub struct User {
-    username: String,
-    password: String,
-    token: String,
-    elo: u32,
-    time_created: String,
-    games_won: u32,
-    games_lost: u32,
+    pub username: String,
+    pub password: String,
+    pub token: String,
+    pub elo: u32,
+    pub time_created: String,
+    pub games_won: u32,
+    pub games_lost: u32,
 }
 
 impl Database {
@@ -55,8 +55,8 @@ impl Database {
             .unwrap();
     }
 
-    pub fn register_user(&self, username: String, password: String) -> Option<User> {
-        let password = Database::hash_password(password);
+    pub fn register_user(&self, username: String, password: String) -> Option<Token> {
+        let hashed_password = Database::hash_password(password.clone());
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
@@ -66,12 +66,12 @@ impl Database {
         let token =
             Database::hash_password(rand::thread_rng().gen_range(u64::MIN..u64::MAX).to_string());
 
-        self.connection.execute(
+        let result = self.connection.execute(
             "INSERT into users (
                 username,
                 hashed_password,
                 token,
-                elo
+                elo,
                 time_created,
                 games_won,
                 games_lost
@@ -83,12 +83,16 @@ impl Database {
                 ?4,
                 ?5,
                 ?6,
-                ?7,
+                ?7
             )",
-            (username, password, token, 500, timestamp, 0, 0),
+            (&username, &hashed_password, token, 500, timestamp, 0, 0),
         );
 
-        None
+        if result.is_ok() {
+            self.get_token(username, password)
+        } else {
+            None
+        }
     }
 
     pub fn get_token(&self, username: String, password: String) -> Option<Token> {

@@ -20,7 +20,6 @@ async fn rocket() -> _ {
         .mount("/auth", auth::routes())
         .manage(app)
         .configure(rocket::Config {
-            log_level: rocket::config::LogLevel::Critical,
             ..rocket::Config::default()
         })
 }
