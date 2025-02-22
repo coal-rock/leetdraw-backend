@@ -1,4 +1,4 @@
-use crate::app::App;
+use crate::{app::App, database::User};
 use rocket::{State, http::Status, response::status, serde::json::Json};
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
@@ -12,6 +12,11 @@ pub struct AuthorizationResponse {
 pub struct Credentials {
     username: String,
     password: String,
+}
+
+#[derive(Deserialize)]
+pub struct Authorization {
+    authorization: String,
 }
 
 pub type Token = String;
@@ -60,7 +65,6 @@ pub fn register(
 
     match response {
         Some(token) => {
-            println!("hello");
             return status::Custom(
                 Status::Ok,
                 Json(AuthorizationResponse {
@@ -79,15 +83,27 @@ pub fn register(
     }
 }
 
-#[post("/test2", format = "json", data = "<credentials>")]
-fn test2(state: &State<Mutex<App>>, credentials: Json<Credentials>) -> String {
-    let username = &credentials.username;
-    let password = &credentials.password;
+#[post("/get_user", format = "json", data = "<authorization>")]
+fn get_user(
+    state: &State<Mutex<App>>,
+    authorization: Json<Authorization>,
+) -> status::Custom<Json<Option<User>>> {
+    let response = state
+        .lock()
+        .unwrap()
+        .database
+        .get_user(authorization.authorization.clone());
 
-    // Here you can process the credentials, e.g., authentication
-    format!("Username: {}, Password: {}", username, password)
+    match response {
+        Some(user) => {
+            return status::Custom(Status::Ok, Json(Some(user)));
+        }
+        None => {
+            return status::Custom(Status::BadRequest, Json(None));
+        }
+    }
 }
 
 pub fn routes() -> Vec<rocket::Route> {
-    rocket::routes![login, register, test2]
+    rocket::routes![login, register, get_user]
 }

@@ -3,6 +3,7 @@ use rand::{self, Rng};
 use rusqlite::{
     Connection, Result, fallible_streaming_iterator::FallibleStreamingIterator, params,
 };
+use serde::{Deserialize, Serialize};
 use std::{
     time::{SystemTime, UNIX_EPOCH},
     u64,
@@ -14,6 +15,7 @@ pub struct Database {
     connection: Connection,
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct User {
     pub username: String,
     pub password: String,
