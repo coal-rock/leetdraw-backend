@@ -1,6 +1,8 @@
 use argon2::{self, Config, verify_encoded};
 use rand::{self, Rng};
-use rusqlite::{Connection, Result, params};
+use rusqlite::{
+    Connection, Result, fallible_streaming_iterator::FallibleStreamingIterator, params,
+};
 use std::{
     time::{SystemTime, UNIX_EPOCH},
     u64,
@@ -116,6 +118,37 @@ impl Database {
             if user.1 == hashed_password {
                 return Some(user.0);
             }
+        }
+
+        None
+    }
+
+    pub fn get_user(&self, token: String) -> Option<User> {
+        let mut stmt = self
+            .connection
+            .prepare("SELECT username, hashed_password, token, elo, time_created, games_won, games_lost FROM users WHERE token = ?1")
+            .unwrap();
+
+        let mut rows = stmt.query([token]).unwrap();
+
+        while let Some(row) = rows.next().unwrap() {
+            let username: String = row.get(0).unwrap();
+            let password: String = row.get(1).unwrap();
+            let token: String = row.get(2).unwrap();
+            let elo: u32 = row.get(3).unwrap();
+            let time_created: String = row.get(4).unwrap();
+            let games_won: u32 = row.get(5).unwrap();
+            let games_lost: u32 = row.get(6).unwrap();
+
+            return Some(User {
+                username,
+                password,
+                token,
+                elo,
+                time_created,
+                games_won,
+                games_lost,
+            });
         }
 
         None

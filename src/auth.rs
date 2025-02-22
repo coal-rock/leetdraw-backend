@@ -1,12 +1,10 @@
-use std::sync::{Arc, Mutex, RwLock};
-
+use crate::app::App;
 use rocket::{State, http::Status, response::status, serde::json::Json};
 use serde::{Deserialize, Serialize};
-
-use crate::app::{App, SharedApp};
+use std::sync::Mutex;
 
 #[derive(Serialize)]
-pub struct RegisterResponse {
+pub struct AuthorizationResponse {
     pub authorization: Option<String>,
 }
 
@@ -22,7 +20,7 @@ pub type Token = String;
 pub fn login(
     state: &State<Mutex<App>>,
     credentials: Json<Credentials>,
-) -> status::Custom<Json<RegisterResponse>> {
+) -> status::Custom<Json<AuthorizationResponse>> {
     let response = state
         .lock()
         .unwrap()
@@ -33,7 +31,7 @@ pub fn login(
         Some(token) => {
             return status::Custom(
                 Status::Ok,
-                Json(RegisterResponse {
+                Json(AuthorizationResponse {
                     authorization: Some(token),
                 }),
             );
@@ -41,7 +39,7 @@ pub fn login(
         None => {
             return status::Custom(
                 Status::BadRequest,
-                Json(RegisterResponse {
+                Json(AuthorizationResponse {
                     authorization: None,
                 }),
             );
@@ -53,7 +51,7 @@ pub fn login(
 pub fn register(
     state: &State<Mutex<App>>,
     credentials: Json<Credentials>,
-) -> status::Custom<Json<RegisterResponse>> {
+) -> status::Custom<Json<AuthorizationResponse>> {
     let response = state
         .lock()
         .unwrap()
@@ -65,7 +63,7 @@ pub fn register(
             println!("hello");
             return status::Custom(
                 Status::Ok,
-                Json(RegisterResponse {
+                Json(AuthorizationResponse {
                     authorization: Some(token),
                 }),
             );
@@ -73,7 +71,7 @@ pub fn register(
         None => {
             return status::Custom(
                 Status::BadRequest,
-                Json(RegisterResponse {
+                Json(AuthorizationResponse {
                     authorization: None,
                 }),
             );
