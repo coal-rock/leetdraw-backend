@@ -109,19 +109,80 @@ pub fn init_match(
 }
 
 #[derive(Serialize, Deserialize)]
-struct GetMatchResponse {
-    success: bool,
-    match_id: Option<String>,
+pub struct PollMatchRequest {
+    authorization: String,
+    game_id: String,
 }
 
-#[post("/get_match", format = "json", data = "<authorization>")]
-pub fn get_match(
+#[derive(Serialize, Deserialize)]
+pub struct PollMatchResponse {
+    game_ready: bool,
+    message: Option<String>,
+}
+
+#[post("/poll_match", format = "json", data = "<poll_match_request>")]
+pub fn poll_match(
     state: &State<Mutex<App>>,
-    authorization: Json<Authorization>,
-) -> status::Custom<Json<Option<GetMatchResponse>>> {
-    todo!()
+    poll_match_request: Json<PollMatchRequest>,
+) -> status::Custom<Json<Option<PollMatchResponse>>> {
+    let poll_match_request = poll_match_request.0;
+
+    let user = state
+        .lock()
+        .unwrap()
+        .database
+        .get_user(poll_match_request.authorization.clone());
+
+    let user = match user {
+        Some(user) => user,
+        None => {
+            return status::Custom(
+                Status::BadRequest,
+                Json(Some(PollMatchResponse {
+                    game_ready: false,
+                    message: Some(String::from("invalid user authorization")),
+                })),
+            );
+        }
+    };
+
+    match state
+        .lock()
+        .unwrap()
+        .lobbies
+        .get(&poll_match_request.game_id)
+    {
+        Some(game) => {
+            if game.player2.is_some() {
+                return status::Custom(
+                    Status::Ok,
+                    Json(Some(PollMatchResponse {
+                        game_ready: true,
+                        message: None,
+                    })),
+                );
+            } else {
+                return status::Custom(
+                    Status::Ok,
+                    Json(Some(PollMatchResponse {
+                        game_ready: false,
+                        message: Some(String::from("lobby missing second player")),
+                    })),
+                );
+            }
+        }
+        None => {
+            return status::Custom(
+                Status::BadRequest,
+                Json(Some(PollMatchResponse {
+                    game_ready: false,
+                    message: Some(String::from("invalid game id")),
+                })),
+            );
+        }
+    }
 }
 
 pub fn routes() -> Vec<rocket::Route> {
-    rocket::routes![init_match]
+    rocket::routes![init_match, poll_match]
 }
