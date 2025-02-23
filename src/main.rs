@@ -20,6 +20,7 @@ async fn rocket() -> _ {
         .mount("/auth", auth::routes())
         .manage(app)
         .configure(rocket::Config {
+            address: "0.0.0.0".parse().unwrap(),
             ..rocket::Config::default()
         })
 }

@@ -18,7 +18,6 @@ pub struct Database {
 #[derive(Serialize, Deserialize)]
 pub struct User {
     pub username: String,
-    pub password: String,
     pub token: String,
     pub elo: u32,
     pub time_created: String,
@@ -144,7 +143,7 @@ impl Database {
 
             return Some(User {
                 username,
-                password,
+                // password,
                 token,
                 elo,
                 time_created,
