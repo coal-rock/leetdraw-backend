@@ -18,6 +18,7 @@ async fn rocket() -> _ {
 
     rocket::build()
         .mount("/auth", auth::routes())
+        .mount("/game", game::routes())
         .manage(app)
         .configure(rocket::Config {
             address: "0.0.0.0".parse().unwrap(),
