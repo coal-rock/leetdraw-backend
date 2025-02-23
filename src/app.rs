@@ -18,7 +18,7 @@ impl App {
         }
     }
 
-    pub fn list_open_quickplay_games(&self) -> Option<HashMap<String, Game>> {
+    pub fn list_open_quickplay_games(&self) -> Option<HashMap<String, &Game>> {
         let mut open_games: HashMap<String, &Game> = HashMap::new();
 
         for (username, game) in self.games.iter() {
